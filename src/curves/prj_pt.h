@@ -85,4 +85,6 @@ ATTRIBUTE_WARN_UNUSED_RET int prj_pt_shortw_to_aff_pt_montgomery(prj_pt_src_t in
 				       ec_montgomery_crv_src_t montgomery_crv,
 				       aff_pt_montgomery_t out_montgomery);
 
+ATTRIBUTE_WARN_UNUSED_RET int prj_pt_ec_mult_wnaf(prj_pt_t out, nn_src_t m, prj_pt_src_t in11, nn_src_t n, prj_pt_src_t in3);
+
 #endif /* __PRJ_PT_H__ */

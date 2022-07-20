@@ -2031,3 +2031,456 @@ err:
 
 	return ret;
 }
+
+static int _jprj_pt_dbl_monty(prj_pt_t out, prj_pt_src_t in){
+
+	// ext_printf("_jprj_pt_dbl_monty\n");
+
+        int ret;
+        int check;
+	ret = prj_pt_init(out, in->crv); EG(ret, err);
+	ret = prj_pt_iszero(in, &check); EG(ret, err);
+	if (check) {
+		ret = prj_pt_zero(out);
+		goto err;
+	}
+
+	fp x2, x4, y2, y4, z2;
+	ret = fp_init(&x2, out->crv->a.ctx); EG(ret, err);
+	ret = fp_init(&x4, out->crv->a.ctx); EG(ret, err);
+	ret = fp_init(&y2, out->crv->a.ctx); EG(ret, err);
+	ret = fp_init(&y4, out->crv->a.ctx); EG(ret, err);
+	ret = fp_init(&z2, out->crv->a.ctx); EG(ret, err);
+
+	/* x2 = 3x^2 */
+
+	ret = fp_mul_monty(&z2, &in->Z, &in->Z); EG(ret, err);
+
+	// fp_mul_monty(&z2, &z2, &z2);
+	// fp_mul_monty(&z2, &z2, &out->crv->a_monty);
+	// fp_mul_monty(&x2, &in->X, &in->X);
+	// fp_add_monty(&x4, &x2, &x2);
+	// fp_add_monty(&x2, &x4, &x2);
+	// fp_add_monty(&x2, &x2, &z2);
+
+	/* M = 3*(X1-Z12)*(X1+Z12) */
+	ret = fp_add_monty(&x2, &in->X, &z2); EG(ret, err);
+	ret = fp_sub_monty(&x4, &in->X, &z2); EG(ret, err);
+	ret = fp_mul_monty(&x2, &x2, &x4); EG(ret, err);
+	ret = fp_add_monty(&x4, &x2, &x2); EG(ret, err);
+	ret = fp_add_monty(&x2, &x4, &x2); EG(ret, err);
+
+
+
+	/* M^2 */
+	ret = fp_mul_monty(&x4, &x2, &x2); EG(ret, err);
+
+	// 2y^2
+	ret = fp_mul_monty(&y2, &in->Y, &in->Y); EG(ret, err);
+	ret = fp_add_monty(&y2, &y2, &y2); EG(ret, err);
+
+	// y4 = 8y^4
+	ret = fp_mul_monty(&y4, &y2, &y2); EG(ret, err);
+	ret = fp_add_monty(&y4, &y4, &y4); EG(ret, err);
+
+	// y2 = 4y^2
+	ret = fp_add_monty(&y2, &y2, &y2); EG(ret, err);
+
+	/* S = 4xy^2   */
+	ret = fp_mul_monty(&y2, &y2, &in->X); EG(ret, err);
+
+	/* X = T = M^2 - 2*s */
+	ret = fp_sub_monty(&out->X, &x4, &y2); EG(ret, err);
+	ret = fp_sub_monty(&out->X, &out->X, &y2); EG(ret, err);
+
+	/* Y3 = M*(S-T)-8*y^4 */
+	ret = fp_sub_monty(&out->Y, &y2, &out->X); EG(ret, err);
+	ret = fp_mul_monty(&out->Y, &out->Y, &x2); EG(ret, err);
+	ret = fp_sub_monty(&out->Y, &out->Y, &y4); EG(ret, err);
+
+	ret = fp_mul_monty(&out->Z, &in->Z, &in->Y); EG(ret, err);
+	ret = fp_add_monty(&out->Z, &out->Z, &out->Z); EG(ret, err);
+
+	fp_uninit(&x2);
+	fp_uninit(&x4);
+	fp_uninit(&y2);
+	fp_uninit(&y4);
+	fp_uninit(&z2);
+err:
+        return ret;
+}
+
+static int jprj_pt_dbl_monty(prj_pt_t out, prj_pt_src_t in){
+        int ret = 0;
+	if (out == in) {
+		prj_pt out_cpy;
+		ret = prj_pt_init(&out_cpy, out->crv); EG(ret, err);
+		ret = prj_pt_copy(&out_cpy, out); EG(ret, err);
+		ret = _jprj_pt_dbl_monty(&out_cpy, in); EG(ret, err);
+		ret = prj_pt_copy(out, &out_cpy); EG(ret, err);
+		prj_pt_uninit(&out_cpy);
+	} else {
+		_jprj_pt_dbl_monty(out, in);
+	}
+err:
+        return ret;
+}
+
+
+static int _jprj_pt_add_monty(prj_pt_t out, prj_pt_src_t in1, prj_pt_src_t in2){
+        int ret;
+        int check;
+
+	// ext_printf("_jprj_pt_add_monty\n");
+
+	// ext_printf("enter in jprj_pt_add_monty");
+
+	MUST_HAVE(in1->crv == in2->crv, ret, err);
+	ret = prj_pt_init(out, in1->crv); EG(ret, err);
+        ret = prj_pt_iszero(in1, &check); EG(ret, err);
+        if (check) {
+                return prj_pt_copy(out, in2);
+	}
+
+        ret = prj_pt_iszero(in2, &check); EG(ret, err);
+	if(prj_pt_iszero(in2, &check)){
+                return prj_pt_copy(out, in1);
+	}
+
+
+	fp u1, u2, s1, s2, tz1, tz2, h, r, r2, h2, h3;
+
+        ret = fp_init(&u1, out->crv->a.ctx); EG(ret, err);
+        ret = fp_init(&u2, out->crv->a.ctx); EG(ret, err);
+        ret = fp_init(&s1, out->crv->a.ctx); EG(ret, err);
+        ret = fp_init(&s2, out->crv->a.ctx); EG(ret, err);
+	ret = fp_init(&tz1, out->crv->a.ctx); EG(ret, err);
+	ret = fp_init(&tz2, out->crv->a.ctx); EG(ret, err);
+	ret = fp_init(&h, out->crv->a.ctx); EG(ret, err);
+	ret = fp_init(&r, out->crv->a.ctx); EG(ret, err);
+	ret = fp_init(&r2, out->crv->a.ctx); EG(ret, err);
+	ret = fp_init(&h2, out->crv->a.ctx); EG(ret, err);
+	ret = fp_init(&h3, out->crv->a.ctx); EG(ret, err);
+
+        ret = fp_mul_monty(&tz1, &in1->Z, &in1->Z); EG(ret, err);
+	ret = fp_mul_monty(&tz2, &in2->Z, &in2->Z); EG(ret, err);
+
+        ret = fp_mul_monty(&u1, &in1->X, &tz2); EG(ret, err);
+	ret = fp_mul_monty(&u2, &in2->X, &tz1); EG(ret, err);
+
+        ret = fp_mul_monty(&tz1, &tz1, &in1->Z); EG(ret, err);
+	ret = fp_mul_monty(&tz2, &tz2, &in2->Z); EG(ret, err);
+
+        ret = 	fp_mul_monty(&s1, &in1->Y, &tz2); EG(ret, err);
+	ret = fp_mul_monty(&s2, &in2->Y, &tz1); EG(ret, err);
+
+        ret = fp_sub_monty(&h, &u2, &u1); EG(ret, err);
+	ret = fp_sub_monty(&r, &s2, &s1); EG(ret, err);
+
+        int check1, check2;
+        ret = fp_iszero(&h, &check1); EG(ret, err);
+        ret = fp_iszero(&r, &check2); EG(ret, err);
+	if (check1 && check2){
+
+		// ext_printf("_jprj_pt_add_monty zero\n");
+		jprj_pt_dbl_monty(out, in1);
+	}else{
+		ret = fp_mul_monty(&r2, &r, &r); EG(ret, err);
+		ret = fp_mul_monty(&h2, &h, &h); EG(ret, err);
+		ret = fp_mul_monty(&h3, &h2, &h); EG(ret, err);
+
+		ret = fp_mul_monty(&u1, &u1, &h2); EG(ret, err);
+
+		ret = fp_sub_monty(&out->X, &r2, &h3); EG(ret, err);
+		ret = fp_sub_monty(&out->X, &out->X, &u1); EG(ret, err);
+		ret = fp_sub_monty(&out->X, &out->X, &u1); EG(ret, err);
+
+		ret = fp_mul_monty(&s1, &s1, &h3); EG(ret, err);
+
+		ret = fp_sub_monty(&out->Y, &u1, &out->X); EG(ret, err);
+		ret = fp_mul_monty(&out->Y, &out->Y, &r); EG(ret, err);
+		ret = fp_sub_monty(&out->Y, &out->Y, &s1); EG(ret, err);
+
+		ret = fp_mul_monty(&out->Z, &in1->Z, &in2->Z); EG(ret, err);
+		ret = fp_mul_monty(&out->Z, &out->Z, &h); EG(ret, err);
+	}
+
+	fp_uninit(&u1);
+	fp_uninit(&u2);
+	fp_uninit(&s1);
+	fp_uninit(&s2);
+	fp_uninit(&tz1);
+	fp_uninit(&tz2);
+	fp_uninit(&h);
+	fp_uninit(&r);
+	fp_uninit(&r2);
+	fp_uninit(&h2);
+	fp_uninit(&h3);
+	// ext_printf("_jprj_pt_add_monty end\n");
+err:
+        return ret;
+}
+
+
+static int jprj_pt_add_monty(prj_pt_t out, prj_pt_src_t in1, prj_pt_src_t in2){
+        int ret;
+	if ((out == in1) || (out == in2)) {
+		prj_pt out_cpy;
+		ret = prj_pt_init(&out_cpy, out->crv); EG(ret, err);
+		ret = prj_pt_copy(&out_cpy, out); EG(ret, err);
+		ret = _jprj_pt_add_monty(&out_cpy, in1, in2); EG(ret, err);
+		ret = prj_pt_copy(out, &out_cpy); EG(ret, err);
+		prj_pt_uninit(&out_cpy);
+	} else {
+		return _jprj_pt_add_monty(out, in1, in2);
+	}
+err:
+        return ret;
+}
+
+/*
+precomp points = [1, 3, 5, 2n + 1,....2^(w-1)] multiply point in
+*/
+int get_pre_comp_points(prj_pt_t pre_comp, prj_pt_src_t in, int size){
+        int ret;
+
+	prj_pt in2;
+
+	ret = prj_pt_copy(&pre_comp[0], in); EG(ret, err);
+	ret = jprj_pt_dbl_monty(&in2, in); EG(ret, err);
+
+	int n = 1;
+	while (n < size){
+		ret = jprj_pt_add_monty(&pre_comp[n], &pre_comp[n - 1], &in2); EG(ret, err);
+		n++;
+	}
+
+	prj_pt_uninit(&in2);
+err:
+        return ret;
+}
+
+int ecmult_wnaf(bitcnt_t *bc, int *wnag, nn_src_t m, int window){
+        int ret;
+        int check;
+
+	nn temp, temp2, w2exp, w2exp1;
+	ret = nn_init(&temp, 4); EG(ret, err);
+	ret = nn_init(&temp2, 4); EG(ret, err);
+	ret = nn_init(&w2exp, 4); EG(ret, err);
+	ret = nn_init(&w2exp1, 4); EG(ret, err);
+
+	ret = nn_set_word_value(&w2exp, 1 << window); EG(ret, err);
+	ret = nn_set_word_value(&w2exp1, 1 << (window - 1)); EG(ret, err);
+
+	ret = nn_copy(&temp, m); EG(ret, err);
+	bitcnt_t n = 0;
+
+	while(1){
+		ret = nn_cmp_word(&temp, 0, &check); EG(ret, err);
+		if (!check){
+			break;
+                }
+                ret = nn_isodd(&temp, &check); EG(ret, err);
+
+		if (check){
+
+			ret = nn_mod(&temp2, &temp, &w2exp); EG(ret, err);
+                        ret = nn_cmp(&temp2, &w2exp1, &check); EG(ret, err);
+			if(check > 0){
+				*(wnag + n) = temp2.val[0] - (1 << window);
+
+				ret = nn_add(&temp, &temp, &w2exp); EG(ret, err);
+				ret = nn_sub(&temp, &temp, &temp2); EG(ret, err);
+			} else {
+				*(wnag + n) = temp2.val[0];
+				ret = nn_sub(&temp, &temp, &temp2); EG(ret, err);
+			}
+
+		}else{
+			*(wnag + n) = 0;
+		}
+		ret = nn_rshift(&temp, &temp, 1); EG(ret, err);
+		n++;
+	}
+	nn_uninit(&temp);
+	nn_uninit(&temp2);
+	nn_uninit(&w2exp);
+	nn_uninit(&w2exp1);
+
+	*bc = n;
+err:
+        return ret;
+}
+
+
+int prj_pt_ec_mult_wnaf(prj_pt_t out, nn_src_t m, prj_pt_src_t in11, nn_src_t n, prj_pt_src_t in3)
+{
+        int ret;
+
+	prj_pt in22, in111;
+	prj_pt_t in2, in1;
+	// calculate precomputation for in1 and in2
+	int window = 5;
+	int pre_comp_size = 1 << (window - 2);
+
+	// ext_printf("window size %d\n", window);
+	// ext_printf("pre_comp_size %d\n", pre_comp_size);
+
+	prj_pt neg_pt;
+	prj_pt pre_comp_m[pre_comp_size];
+	prj_pt pre_comp_n[pre_comp_size];
+
+	nn mr, nr;
+
+	// prj_pt_init(&neg_pt, in2->crv);
+	int m_wnag[512], n_wnag[512];
+
+
+	in2 = &in22;
+	in1 = &in111;
+	ret = prj_pt_init(in2, in3->crv); EG(ret, err);
+	ret = prj_pt_init(in1, in3->crv); EG(ret, err);
+
+	ret = prj_pt_copy(in1, in11); EG(ret, err);
+	ret = prj_pt_copy(in2, in3); EG(ret, err);
+
+	// fp inv;
+	// fp_init(&inv, in3->crv->a.ctx);
+	// fp_inv(&inv, &in3->Z);
+
+	// fp_mul(&(in2)->X, &in3->X, &inv);
+	// fp_mul(&(in2)->Y, &in3->Y, &inv);
+	// fp_one(&(in2)->Z);
+
+	// fp_uninit(&inv);
+
+	ret = fp_redcify(&in1->X, &in1->X); EG(ret, err);
+	ret = fp_redcify(&in1->Y, &in1->Y); EG(ret, err);
+	ret = fp_redcify(&in1->Z, &in1->Z); EG(ret, err);
+
+	ret = fp_redcify(&in2->X, &in2->X); EG(ret, err);
+	ret = fp_redcify(&in2->Y, &in2->Y); EG(ret, err);
+	ret = fp_redcify(&in2->Z, &in2->Z); EG(ret, err);
+
+	// dbg_ec_point_print("in1", in1);
+	// dbg_nn_print("in1 X", &in1->X.fp_val);
+	// dbg_nn_print("in1 Y", &in1->Y.fp_val);
+	// dbg_nn_print("in1 Z", &in1->Z.fp_val);
+
+	// dbg_nn_print("in2 X", &in2->X.fp_val);
+	// dbg_nn_print("in2 Y", &in2->Y.fp_val);
+	// dbg_nn_print("in2 Z", &in2->Z.fp_val);
+
+	get_pre_comp_points(pre_comp_m, in1, pre_comp_size);
+	get_pre_comp_points(pre_comp_n, in2, pre_comp_size);
+
+
+	ret = nn_mod(&mr, m, &(in1->crv->order)); EG(ret, err);
+	ret = nn_mod(&nr, n, &(in2->crv->order)); EG(ret, err);
+
+
+	bitcnt_t m_bit_len;
+        ret = ecmult_wnaf(&m_bit_len, m_wnag, &mr, window); EG(ret, err);
+	bitcnt_t n_bit_len;
+        ret = ecmult_wnaf(&n_bit_len, n_wnag, &nr, window); EG(ret, err);
+	// bitcnt_t m_bit_len = nn_bitlen(m);
+	// bitcnt_t n_bit_len = nn_bitlen(n);
+
+	bitcnt_t bit_len = m_bit_len > n_bit_len ? m_bit_len : n_bit_len;
+
+	// ext_printf("bit_len = %d\n", bit_len);
+
+
+
+	ret = prj_pt_init(&neg_pt, in1->crv); EG(ret, err);
+	ret = prj_pt_init(out, in1->crv); EG(ret, err);
+	// out->X = in2->X;
+	// prj_pt_init(out, in2->crv);
+	ret = prj_pt_zero(out); EG(ret, err);
+	// prj_pt_copy(out, in1);
+
+	// dbg_ec_point_print("out", out);
+
+	int i;
+
+	int no;
+	for (i = bit_len - 1; i >= 0; i--)
+	{
+		// ext_printf("loop %d\n", i);
+		jprj_pt_dbl_monty(out, out);
+		// if(!prj_pt_iszero(out)){
+		// 	dbg_ec_point_print("out", out);
+		// }
+
+		if (i < m_bit_len)
+		{
+			no = m_wnag[i];
+			// ext_printf("m_wnag[i] = %d \n", no);
+			if (no > 0)
+			{
+				jprj_pt_add_monty(out, out, &pre_comp_m[(no-1)/2]);
+			}
+			else if (no < 0)
+			{
+				//get negative pre_comp_m, then add
+				ret = prj_pt_copy(&neg_pt, &pre_comp_m[(-no-1)/2]); EG(ret, err);
+				ret = fp_neg(&(neg_pt.Y), &(neg_pt.Y)); EG(ret, err);
+
+				jprj_pt_add_monty(out, out, &neg_pt);
+			}
+		}
+
+		if (i < n_bit_len)
+		{
+			no = n_wnag[i];
+			// ext_printf("n_wnag[i] = %d \n", no);
+			if (no > 0)
+			{
+				jprj_pt_add_monty(out, out, &pre_comp_n[(no-1)/2]);
+			}
+			else if (no < 0)
+			{
+				//get negative pre_comp_m, then add
+				ret = prj_pt_copy(&neg_pt, &pre_comp_n[(-no-1)/2]); EG(ret, err);
+				ret = fp_neg(&(neg_pt.Y), &(neg_pt.Y)); EG(ret, err);
+
+				jprj_pt_add_monty(out, out, &neg_pt);
+			}
+		}
+
+	}
+
+	ret = fp_unredcify(&out->X, &out->X); EG(ret, err);
+	ret = fp_unredcify(&out->Y, &out->Y); EG(ret, err);
+	ret = fp_unredcify(&out->Z, &out->Z); EG(ret, err);
+
+	fp zinv2, zinv3;
+	ret = fp_init(&zinv2, out->crv->a.ctx); EG(ret, err);
+	ret = fp_init(&zinv3, out->crv->a.ctx); EG(ret, err);
+
+	ret = fp_inv(&zinv3, &out->Z); EG(ret, err);
+	ret = fp_mul(&zinv2, &zinv3, &zinv3); EG(ret, err);
+	ret = fp_mul(&zinv3, &zinv3, &zinv2); EG(ret, err);
+	ret = fp_mul(&out->X, &out->X, &zinv2); EG(ret, err);
+	ret = fp_mul(&out->Y, &out->Y, &zinv3); EG(ret, err);
+	ret = fp_one(&out->Z); EG(ret, err);
+
+	fp_uninit(&zinv2);
+	fp_uninit(&zinv3);
+
+	nn_uninit(&mr);
+	nn_uninit(&nr);
+	prj_pt_uninit(&neg_pt);
+	for (i = 0; i < pre_comp_size; i++)
+	{
+		prj_pt_uninit(&pre_comp_m[i]);
+		prj_pt_uninit(&pre_comp_n[i]);
+	}
+
+	prj_pt_uninit(in1);
+	prj_pt_uninit(in2);
+err:
+        return ret;
+
+}

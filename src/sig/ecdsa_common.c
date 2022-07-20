@@ -704,7 +704,7 @@ int __ecdsa_verify_finalize(struct ec_verify_context *ctx,
 {
 	prj_pt uG, vY;
 	prj_pt_t W_prime;
-	nn e, sinv, uv, r_prime;
+	nn e, sinv, u, v, r_prime;
 	prj_pt_src_t G, Y;
 	u8 hash[MAX_DIGEST_SIZE];
 	bitcnt_t rshift, q_bit_len;
@@ -714,7 +714,7 @@ int __ecdsa_verify_finalize(struct ec_verify_context *ctx,
 	int ret, iszero, cmp;
 
 	uG.magic = vY.magic = WORD(0);
-	e.magic = sinv.magic = uv.magic = r_prime.magic = WORD(0);
+	e.magic = sinv.magic = u.magic = v.magic = r_prime.magic = WORD(0);
 
 	/* NOTE: we reuse uG for W_prime to optimize local variables */
 	W_prime = &uG;
@@ -783,17 +783,14 @@ int __ecdsa_verify_finalize(struct ec_verify_context *ctx,
 	dbg_nn_print("sinv", &sinv);
 
 	/* 5. Compute u = (s^-1)e mod q */
-	ret = nn_mod_mul(&uv, &e, &sinv, q); EG(ret, err);
-	dbg_nn_print("u = (s^-1)e mod q", &uv);
-	ret = prj_pt_mul(&uG, &uv, G); EG(ret, err);
+	ret = nn_mod_mul(&u, &e, &sinv, q); EG(ret, err);
+	dbg_nn_print("u = (s^-1)e mod q", &u);
 
 	/* 6. Compute v = (s^-1)r mod q */
-	ret = nn_mod_mul(&uv, r, &sinv, q); EG(ret, err);
-	dbg_nn_print("v = (s^-1)r mod q", &uv);
-	ret = prj_pt_mul(&vY, &uv, Y); EG(ret, err);
+	ret = nn_mod_mul(&u, r, &sinv, q); EG(ret, err);
+	dbg_nn_print("v = (s^-1)r mod q", &v);
 
-	/* 7. Compute W' = uG + vY */
-	ret = prj_pt_add(W_prime, &uG, &vY); EG(ret, err);
+      	ret = prj_pt_ec_mult_wnaf(W_prime, &u, G, &v, Y); EG(ret, err);
 
 	/* 8. If W' is the point at infinity, reject the signature. */
 	ret = prj_pt_iszero(W_prime, &iszero); EG(ret, err);
@@ -814,7 +811,7 @@ int __ecdsa_verify_finalize(struct ec_verify_context *ctx,
 	prj_pt_uninit(&vY);
 	nn_uninit(&e);
 	nn_uninit(&sinv);
-	nn_uninit(&uv);
+	nn_uninit(&u);
 	nn_uninit(&r_prime);
 
 	/*
