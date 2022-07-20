@@ -703,7 +703,7 @@ int __ecdsa_verify_finalize(struct ec_verify_context *ctx,
 			    ec_alg_type key_type)
 {
 	prj_pt uG, vY;
-	prj_pt_t W_prime;
+	prj_pt W_prime;
 	nn e, sinv, u, v, r_prime;
 	prj_pt_src_t G, Y;
 	u8 hash[MAX_DIGEST_SIZE];
@@ -713,11 +713,9 @@ int __ecdsa_verify_finalize(struct ec_verify_context *ctx,
 	u8 hsize;
 	int ret, iszero, cmp;
 
+	/* MUST_HAVE(0, ret, err); */
 	uG.magic = vY.magic = WORD(0);
 	e.magic = sinv.magic = u.magic = v.magic = r_prime.magic = WORD(0);
-
-	/* NOTE: we reuse uG for W_prime to optimize local variables */
-	W_prime = &uG;
 
 	/*
 	 * First, verify context has been initialized and public
@@ -742,6 +740,7 @@ int __ecdsa_verify_finalize(struct ec_verify_context *ctx,
 	r = &(ctx->verify_data.ecdsa.r);
 	s = &(ctx->verify_data.ecdsa.s);
 
+	/* MUST_HAVE(0, ret, err); */
 	/* 2. Compute h = H(m) */
 	/* Since we call a callback, sanity check our mapping */
 	ret = hash_mapping_callbacks_sanity_check(ctx->h); EG(ret, err);
@@ -774,6 +773,7 @@ int __ecdsa_verify_finalize(struct ec_verify_context *ctx,
 	}
 	dbg_nn_print("h	  final import as nn", &e);
 
+	/* MUST_HAVE(0, ret, err); */
 	ret = nn_mod(&e, &e, q); EG(ret, err);
 	dbg_nn_print("e", &e);
 
@@ -790,17 +790,19 @@ int __ecdsa_verify_finalize(struct ec_verify_context *ctx,
 	ret = nn_mod_mul(&u, r, &sinv, q); EG(ret, err);
 	dbg_nn_print("v = (s^-1)r mod q", &v);
 
-      	ret = prj_pt_ec_mult_wnaf(W_prime, &u, G, &v, Y); EG(ret, err);
+	/* MUST_HAVE(0, ret, err); */
+      	ret = prj_pt_ec_mult_wnaf(&W_prime, &u, G, &v, Y); EG(ret, err);
 
+	MUST_HAVE(0, ret, err);
 	/* 8. If W' is the point at infinity, reject the signature. */
-	ret = prj_pt_iszero(W_prime, &iszero); EG(ret, err);
+	ret = prj_pt_iszero(&W_prime, &iszero); EG(ret, err);
 	MUST_HAVE(!iszero, ret, err);
 
 	/* 9. Compute r' = W'_x mod q */
-	ret = prj_pt_unique(W_prime, W_prime); EG(ret, err);
-	dbg_nn_print("W'_x", &(W_prime->X.fp_val));
-	dbg_nn_print("W'_y", &(W_prime->Y.fp_val));
-	ret = nn_mod(&r_prime, &(W_prime->X.fp_val), q); EG(ret, err);
+	ret = prj_pt_unique(&W_prime, &W_prime); EG(ret, err);
+	dbg_nn_print("W'_x", &(W_prime.X.fp_val));
+	dbg_nn_print("W'_y", &(W_prime.Y.fp_val));
+	ret = nn_mod(&r_prime, &(W_prime.X.fp_val), q); EG(ret, err);
 
 	/* 10. Accept the signature if and only if r equals r' */
 	ret = nn_cmp(&r_prime, r, &cmp); EG(ret, err);
@@ -823,7 +825,6 @@ int __ecdsa_verify_finalize(struct ec_verify_context *ctx,
 	}
 
 	/* Clean what remains on the stack */
-	PTR_NULLIFY(W_prime);
 	PTR_NULLIFY(G);
 	PTR_NULLIFY(Y);
 	VAR_ZEROIFY(rshift);
