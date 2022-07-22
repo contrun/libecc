@@ -161,11 +161,10 @@ void nn_set_wlen(nn_t A, u8 new_wlen)
 	u8 i;
 
 	nn_check_initialized(A);
-	MUST_HAVE(new_wlen <= NN_MAX_WORD_LEN);
-	MUST_HAVE(A->wlen <= NN_MAX_WORD_LEN);
   if (A->wlen == new_wlen) {
     return;
   }
+	MUST_HAVE(new_wlen <= NN_MAX_WORD_LEN);
 
         /* Trimming performed in constant time */
         for (i = 0; i < NN_MAX_WORD_LEN; i++) {
