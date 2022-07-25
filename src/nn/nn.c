@@ -67,20 +67,22 @@ int nn_is_initialized(nn_src_t A)
 		   (A->wlen <= NN_MAX_WORD_LEN));
 }
 
+void nn_init_no_clear(nn_t A, u16 len)
+{
+	MUST_HAVE((A != NULL) && (len <= NN_MAX_BYTE_LEN));
+
+	A->wlen = (u8)BYTE_LEN_WORDS(len);
+	A->magic = NN_MAGIC;
+}
 /*
  * Initialize nn from expected initial byte length 'len', setting its wlen
  * to associated (ceil) value and clearing whole storage space.
  */
 void nn_init(nn_t A, u16 len)
 {
-	u8 i;
+  nn_init_no_clear(A, len);
 
-	MUST_HAVE((A != NULL) && (len <= NN_MAX_BYTE_LEN));
-
-	A->wlen = (u8)BYTE_LEN_WORDS(len);
-	A->magic = NN_MAGIC;
-
-	for (i = 0; i < NN_MAX_WORD_LEN; i++) {
+	for (u8 i = 0; i < NN_MAX_WORD_LEN; i++) {
 		A->val[i] = WORD(0);
 	}
 }
@@ -390,7 +392,7 @@ void nn_init_from_buf(nn_t out_nn, const u8 *buf, u16 buflen)
 	local_memset(tmp, 0, NN_MAX_BYTE_LEN - buflen);
 	local_memcpy(tmp + NN_MAX_BYTE_LEN - buflen, buf, buflen);
 
-	nn_init(out_nn, buflen);
+	nn_init_no_clear(out_nn, buflen);
 
 	for (wpos = 0; wpos < NN_MAX_WORD_LEN; wpos++) {
 		u16 buf_pos = (NN_MAX_WORD_LEN - wpos - 1) * WORD_BYTES;
