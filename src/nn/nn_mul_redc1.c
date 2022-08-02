@@ -21,6 +21,23 @@
 #include "nn_modinv.h"
 #include "nn.h"
 
+#include "../external_deps/print.h"
+#include "../utils/dbg_sig.h"
+
+__attribute__((always_inline)) inline void dump_nn(char *m, nn_src_t a) {
+  const size_t nn_buf_size = 256 / 8;
+  u8 tmp_buf[nn_buf_size];
+  dbg_nn_print(m, a);
+  nn_export_to_buf((u8 *)&tmp_buf, nn_buf_size, a);
+  dbg_buf_print(m, &tmp_buf);
+  const unsigned char *buf = (const unsigned char *)a->val;
+  ext_printf("%s: ", m);
+  for (size_t i = 0; i < nn_buf_size; i++) {
+    ext_printf("%02x", buf[i]);
+  }
+  ext_printf("\n");
+}
+
 /*
  * Given an odd number p, compute Montgomery coefficients r, r_square
  * as well as mpinv so that:
@@ -216,6 +233,9 @@ void nn_mul_redc1(nn_t out, nn_src_t in1, nn_src_t in2, nn_src_t p,
 		  word_t mpinv)
 {
 	/* Handle output aliasing */
+  dump_nn("in1", in1);
+  dump_nn("in2", in2);
+  dump_nn("p", p);
 	if ((out == in1) || (out == in2) || (out == p)) {
 		nn out_cpy;
 		_nn_mul_redc1(&out_cpy, in1, in2, p, mpinv);
@@ -225,6 +245,7 @@ void nn_mul_redc1(nn_t out, nn_src_t in1, nn_src_t in2, nn_src_t p,
 	} else {
 		_nn_mul_redc1(out, in1, in2, p, mpinv);
 	}
+  dump_nn("out", out);
 }
 
 /*
