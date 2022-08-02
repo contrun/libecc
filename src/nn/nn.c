@@ -75,10 +75,9 @@ void nn_init(nn_t A, u16 len)
 {
 	u8 i;
 
-	MUST_HAVE((A != NULL) && (len <= NN_MAX_BYTE_LEN));
-
-	A->wlen = (u8)BYTE_LEN_WORDS(len);
 	A->magic = NN_MAGIC;
+  A->wlen = 4;
+
 
 	for (i = 0; i < NN_MAX_WORD_LEN; i++) {
 		A->val[i] = WORD(0);
@@ -158,6 +157,10 @@ void nn_cnd_swap(int cnd, nn_t in1, nn_t in2)
  */
 void nn_set_wlen(nn_t A, u8 new_wlen)
 {
+  (void)(A);
+  (void)(new_wlen);
+  A->wlen = 4;
+  return;
 	u8 i;
 
 	nn_check_initialized(A);
