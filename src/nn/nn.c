@@ -75,7 +75,7 @@ void nn_init(nn_t A, u16 len)
 {
 	u8 i;
 
-	MUST_HAVE((A != NULL) && (len <= NN_MAX_BYTE_LEN));
+	// MUST_HAVE((A != NULL) && (len <= NN_MAX_BYTE_LEN));
 
 	A->wlen = (u8)BYTE_LEN_WORDS(len);
 	A->magic = NN_MAGIC;
@@ -168,8 +168,8 @@ void nn_set_wlen(nn_t A, u8 new_wlen)
   }
 
         /* Trimming performed in constant time */
-        for (i = 0; i < NN_MAX_WORD_LEN; i++) {
-                A->val[i] &= WORD_MASK_IFZERO((i >= new_wlen));
+        for (i = new_wlen; i < NN_MAX_WORD_LEN; i++) {
+                A->val[i] = 0;
         }
 
 	A->wlen = new_wlen;
@@ -275,7 +275,7 @@ int nn_cmp_word(nn_src_t in, word_t w)
 int nn_cmp(nn_src_t A, nn_src_t B)
 {
 	u8 cmp_len;
-	int mask, ret, i;
+	int ret, i;
 
 	nn_check_initialized(A);
 	nn_check_initialized(B);
@@ -284,9 +284,10 @@ int nn_cmp(nn_src_t A, nn_src_t B)
 
 	ret = 0;
 	for (i = cmp_len - 1; i >= 0; i--) {	/* ok even if cmp_len is 0 */
-		mask = !(ret & 0x1);
-		ret += (A->val[i] > B->val[i]) & mask;
-		ret -= (A->val[i] < B->val[i]) & mask;
+    ret = (A->val[i] > B->val[i]);
+    if (ret) {
+      return ret;
+    }
 	}
 
 	return ret;
