@@ -75,7 +75,7 @@ void nn_init(nn_t A, u16 len)
 {
 	u8 i;
 
-	// MUST_HAVE((A != NULL) && (len <= NN_MAX_BYTE_LEN));
+	MUST_HAVE((A != NULL) && (len <= NN_MAX_BYTE_LEN));
 
 	A->wlen = (u8)BYTE_LEN_WORDS(len);
 	A->magic = NN_MAGIC;
@@ -274,21 +274,19 @@ int nn_cmp_word(nn_src_t in, word_t w)
 int nn_cmp(nn_src_t A, nn_src_t B)
 {
 	u8 cmp_len;
-	int mask, ret, i;
+	int i;
 
 	nn_check_initialized(A);
 	nn_check_initialized(B);
 
 	cmp_len = (A->wlen >= B->wlen) ? A->wlen : B->wlen;
 
-	ret = 0;
 	for (i = cmp_len - 1; i >= 0; i--) {	/* ok even if cmp_len is 0 */
 		if (A->val[i] > B->val[i]) return 1;
 		if (A->val[i] < B->val[i]) return -1;
 	}
 
-  return 0;
-	return ret;
+	return 0;
 }
 
 /*
@@ -302,7 +300,7 @@ void nn_copy(nn_t dst_nn, nn_src_t src_nn)
 {
 	u8 i;
 
-	// MUST_HAVE((const void *)dst_nn != NULL);
+	MUST_HAVE((const void *)dst_nn != NULL);
 	nn_check_initialized(src_nn);
 
   // memcpy(dst_nn->val, src_nn->val, NN_MAX_BYTE_LEN);

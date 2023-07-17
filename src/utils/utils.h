@@ -72,7 +72,8 @@
 
 #include <stdio.h>
 int ckb_exit(signed char code);
-#define MUST_HAVE(x) do { if (!(x)) { printf("MUST_HAVE(%s) failed.", #x); ckb_exit(-2); } } while (0)
+// #define MUST_HAVE(x) do { if (!(x)) { printf("MUST_HAVE(%s) failed.", #x); ckb_exit(-2); } } while (0)
+#define MUST_HAVE(x)
 #define SHOULD_HAVE(x)
 #define KNOWN_FACT(x)
 #endif
