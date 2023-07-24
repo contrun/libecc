@@ -162,9 +162,6 @@ void nn_set_wlen(nn_t A, u8 new_wlen)
 	u8 i;
 	if (A->wlen == new_wlen) {
 		return;
-	} else if (A->wlen < new_wlen) {
-		A->wlen = new_wlen;
-		return;
 	}
 	for (i = 0; i < NN_MAX_WORD_LEN; i++) {
 		if (i >= new_wlen) {
