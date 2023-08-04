@@ -134,6 +134,8 @@ static int nn_modinv_odd(nn_t out, nn_src_t x, nn_src_t m)
 		nn_cnd_swap(swap, &u, uu);
 		/* This parameter is used to avoid handling negative numbers. */
 		/* Computation of 'm - uu' can always be performed. */
+		// Originally, nn_sub and nn_cmp are carried out unconditionally. But these expensive operations
+		// are only needed when the condition odd holds. We refactor that here.
 		if (odd) {
       smaller = (nn_cmp(&u, uu) == -1);
       if (smaller) {
@@ -151,6 +153,7 @@ static int nn_modinv_odd(nn_t out, nn_src_t x, nn_src_t m)
 		MUST_HAVE(nn_cmp(&u, m) < 0);
 		MUST_HAVE(nn_cmp(uu, m) < 0);
 
+		// When a = 0, even if the loop continues, the following iterations will actually change nothing.
 		if (nn_iszero(&a)) break;
 		/*
 		 * As long as a > 0, the quantity
