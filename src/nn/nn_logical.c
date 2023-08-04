@@ -396,6 +396,7 @@ void nn_not(nn_t A, nn_src_t B)
 }
 
 /* Count leading zeros of a word. This is NOT constant time */
+// The below algorithm is taken from Hacker's Delight - Second Edition, 5–3, Counting Leading 0's
 static u8 wclz(word_t A)
 {
     if (A == 0) return 64;

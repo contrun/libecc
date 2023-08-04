@@ -16,6 +16,9 @@
 #                                                                            #
 # ############################################################################
 
+# Original source:
+# https://github.com/piggypiggy/fp256/blob/5dcd0675f82ee7d9757f69c7ab7c40e1b14b39b4/src/ll/riscv64/ll_u256_mont-riscv64.S
+
 .text
 
 #define acc0 t0

@@ -75,6 +75,7 @@ void nn_init(nn_t A, u16 len)
 {
 	u8 i;
 
+	// This is a costly operaiton. We just assume the condition holds.
 	// MUST_HAVE((A != NULL) && (len <= NN_MAX_BYTE_LEN));
 
 	A->wlen = (u8)BYTE_LEN_WORDS(len);
@@ -108,8 +109,8 @@ void nn_one(nn_t A)
 }
 
 /*
- * Uninitialize pointed nn to prevent further use (magic field in
- * the structure is zeroized).
+ * Uninitialize pointed nn to prevent further use (as this is a costly
+ * operation, only the magic field in the structure is zeroized).
  */
 void nn_uninit(nn_t A)
 {
@@ -171,7 +172,6 @@ void nn_set_wlen(nn_t A, u8 new_wlen)
 
 /*
  * Return 1 if given nn is zero. Return 0 otherwise.
- * Done *in constant time*
  */
 int nn_iszero(nn_src_t A)
 {
@@ -218,9 +218,6 @@ int nn_isodd(nn_src_t A)
 
 /*
  * Compare given nn and word.
- * Done *in constant time*
- * (only depending on the input length, not on its value
- * or on the word value).
  */
 int nn_cmp_word(nn_src_t in, word_t w)
 {
@@ -259,28 +256,23 @@ int nn_cmp_word(nn_src_t in, word_t w)
 
 /*
  * Compare given two nn.
- * Done *in constant time*
- * (only depending on the largest length of the inputs,
- * not on their values).
  */
 int nn_cmp(nn_src_t A, nn_src_t B)
 {
 	u8 cmp_len;
-	int mask, ret, i;
+	int i;
 
 	nn_check_initialized(A);
 	nn_check_initialized(B);
 
 	cmp_len = (A->wlen >= B->wlen) ? A->wlen : B->wlen;
 
-	ret = 0;
 	for (i = cmp_len - 1; i >= 0; i--) {	/* ok even if cmp_len is 0 */
 		if (A->val[i] > B->val[i]) return 1;
 		if (A->val[i] < B->val[i]) return -1;
 	}
 
   return 0;
-	return ret;
 }
 
 /*

@@ -23,10 +23,6 @@
  *  o out = in1 +/- in2 if cnd is not zero.
  *  o out = in1 if cnd is zero.
  *
- * The time taken by the operation does not depend on cnd value, i.e. it is
- * constant time for that specific factor, nor on the values of in1 and in2.
- * It still depends on the maximal length of in1 and in2.
- *
  * Common addition and subtraction functions are derived from those conditional
  * versions.
  */
@@ -58,6 +54,7 @@
  */
 static word_t _nn_cnd_add(int cnd, nn_t out, nn_src_t in1, nn_src_t in2)
 {
+  // An non-constant timem optimization to early return on precondition not met.
   if (cnd == 0) {
     if (out != in1) nn_copy(out, in1);
     return 0;
@@ -229,6 +226,7 @@ void nn_inc(nn_t out, nn_src_t in1)
  */
 void nn_cnd_sub(int cnd, nn_t out, nn_src_t in1, nn_src_t in2)
 {
+  // An non-constant timem optimization to early return on precondition not met.
   if (cnd == 0) {
     if (out != in1) nn_copy(out, in1);
     return;
@@ -329,8 +327,17 @@ void nn_mod_add(nn_t out, nn_src_t in1, nn_src_t in2, nn_src_t p)
 	 * of in1 and in2 so getting a carry out does not necessarily mean
 	 * that the sum is larger than p...
 	 */
+	// We assume the precondition that both inputs < p holds, the output out from
+	// above addition must have word width at most p->wlen + 1. the nn_set_wlen
+	// below is used by libecc originally to ensure constant time even if the sum
+	// out overflows. We don't need this here.
+	// nn_set_wlen(out, p->wlen + 1);
 	larger = (nn_cmp(out, p) >= 0);
 	nn_cnd_sub(larger, out, out, p);
+	// Again, we assume the precondition that both inputs < p holds, the result
+	// of nn_cnd_sub is in1+in2-p if in1+in2>p else in1+in2, which must be less
+	// or equal to p. Thus, the nn_set_wlen operation is redundant.
+	// nn_set_wlen(out, p->wlen);
 }
 
 /* Compute out = in1 + 1 mod p */
@@ -375,9 +382,11 @@ void nn_mod_sub(nn_t out, nn_src_t in1, nn_src_t in2, nn_src_t p)
 	/* The below trick is used to avoid handling of "negative" numbers. */
 	smaller = nn_cmp(in1, in2_) < 0;
 	nn_cnd_add(smaller, out, in1, p);
+	// nn_set_wlen(out, p->wlen + 1); /* See Comment in nn_mod_add() */
 	nn_sub(out, out, in2_);
 	if (in2 == out) {
 		nn_uninit(&in2_cpy);
+		// nn_set_wlen(out, p->wlen); /* See Comment in nn_mod_add() */
 	}
 }
 
