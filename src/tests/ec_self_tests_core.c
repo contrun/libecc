@@ -208,7 +208,9 @@ static int ec_sig_known_vector_tests_one(const ec_test_case *c)
 		goto err;
 	}
 
+	ext_printf("mo: ec_test_verify");
 	ret = ec_test_verify(sig, siglen, &(kp.pub_key), c);
+	ext_printf("mo: ec_test_verify result=%d", ret);
 	if (ret) {
 		failed_test = TEST_VERIF_ERROR;
 		goto err;
@@ -266,7 +268,7 @@ int perform_known_test_vectors_test(const char *sig, const char *hash, const cha
 			if(!are_str_equal((const char*)cur_test->ec_str_p->name->buf, curve)){
 				continue;
 			}
-		}	
+		}
 
 		ret = ec_sig_known_vector_tests_one(cur_test);
 		ext_printf("[%s] %30s selftests: known test vectors "

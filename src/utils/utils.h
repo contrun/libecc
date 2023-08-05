@@ -49,9 +49,9 @@
  * those conditions explicit.
  */
 #if defined(__AFL_COMPILER) || defined(FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION)
-/* When we use AFL (American Fuzzy Lop) style fuzzing, we do not 
- * want asserts resulting in SIGABRT interpreted as a 'crash', 
- * or while(1) interpreted as a 'hang'. Hence we force an exit(-1) 
+/* When we use AFL (American Fuzzy Lop) style fuzzing, we do not
+ * want asserts resulting in SIGABRT interpreted as a 'crash',
+ * or while(1) interpreted as a 'hang'. Hence we force an exit(-1)
  * to remove all this false positive 'pollution'.
  */
 #ifndef WITH_STDLIB
@@ -69,9 +69,16 @@
 #define SHOULD_HAVE(x) assert(x)
 #define KNOWN_FACT(x) assert(x)
 #else
-#define MUST_HAVE(x) do { if (!(x)) { while (1); } } while (0)
-#define SHOULD_HAVE(x)
-#define KNOWN_FACT(x)
+
+#include <stdio.h>
+// int ckb_exit(signed char code);
+// #define MUST_HAVE(x) do { if (!(x)) { printf("MUST_HAVE(%s) failed.", #x); ckb_exit(-2); } } while (0)
+// #define SHOULD_HAVE(x)
+// #define KNOWN_FACT(x)
+#include <assert.h>
+#define MUST_HAVE(x) assert(x)
+#define SHOULD_HAVE(x) assert(x)
+#define KNOWN_FACT(x) assert(x)
 #endif
 #endif /* AFL_FUZZ or FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION */
 
