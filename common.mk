@@ -5,10 +5,10 @@ MINGW := $(shell $(CC) -dumpmachine 2>&1 | grep -v mingw)
 # Detect Mac OS compilers: these usually don't like ELF pie related flags ...
 APPLE := $(shell $(CC) -dumpmachine 2>&1 | grep -v apple)
 ifneq ($(MINGW),)
-FPIC_CFLAG=-fPIC
+# FPIC_CFLAG=-fPIC
 ifneq ($(APPLE),)
-FPIE_CFLAG=-fPIE
-FPIE_LDFLAGS=-pie -Wl,-z,relro,-z,now
+# FPIE_CFLAG=-fPIE
+FPIE_LDFLAGS=-Wl,-z,relro,-z,now
 endif
 endif
 
@@ -50,7 +50,7 @@ ifdef LDFLAGS
 USER_DEFINED_LDFLAGS = $(LDFLAGS)
 endif
 
-CFLAGS ?= $(WARNING_CFLAGS) -pedantic -fno-builtin -std=c99 \
+CFLAGS ?= $(WARNING_CFLAGS) -pedantic -fno-builtin \
 	  $(FORTIFY_FLAGS) $(STACK_PROT_FLAG) -O3 -D__unix__
 LDFLAGS ?=
 
@@ -59,7 +59,7 @@ AR ?= ar
 RANLIB ?= ranlib
 # Default AR flags and RANLIB flags if not overriden by user
 AR_FLAGS ?= rcs
-RANLIB_FLAGS ?= 
+RANLIB_FLAGS ?=
 
 # Our debug flags
 DEBUG_CFLAGS = -DDEBUG -O -g
@@ -179,3 +179,8 @@ endif
 ifeq ($(LADDER), 0)
 CFLAGS += -DUSE_DOUBLE_ADD_ALWAYS
 endif
+
+# CFLAGS += -I/home/ubuntu/src/ckb-c-stdlib -I/home/ubuntu/src/ckb-c-stdlib/libc
+# CFLAGS += -DCKB_C_STDLIB_PRINTF
+# CFLAGS += -fno-builtin
+CFLAGS += -Wno-unused-parameter

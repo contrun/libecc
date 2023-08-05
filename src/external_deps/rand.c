@@ -103,5 +103,32 @@ int get_random(unsigned char *buf, u16 len)
  *	and caches with other possibly malicious processes, a microcontroller
  *	that can be observed using EM probes or power consumtion, ...).
  */
-#error "rand.c: you have to implement get_random with a proper entropy source!"
+
+static u64 seed = 0x1234;
+int get_random(unsigned char *buf, u16 len)
+{
+	int ret;
+	u64 a, b;
+	u16 i, j;
+	a = (u64)2862933555777941757;
+	b = (u64)3037000493;
+	i = 0;
+	while(i < len){
+		/* Use a congruential linear generator */
+		seed = ((a * seed) + b);
+
+		for(j = 0; j < sizeof(seed); j++){
+			if((i + j) < len){
+				buf[i + j] = (u8)((seed >> (j * 8)) & 0xff);
+			}
+		}
+		i = (u16)(i + sizeof(seed));
+	}
+
+	ret = 0;
+
+err:
+	return ret;
+}
+
 #endif
