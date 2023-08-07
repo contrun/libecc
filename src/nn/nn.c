@@ -268,7 +268,7 @@ int nn_cmp_word(nn_src_t in, word_t w)
 int nn_cmp(nn_src_t A, nn_src_t B)
 {
 	u8 cmp_len;
-	int ret, i;
+	int mask, ret, i;
 
 	nn_check_initialized(A);
 	nn_check_initialized(B);
