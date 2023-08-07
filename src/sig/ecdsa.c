@@ -599,10 +599,12 @@ int _ecdsa_verify_finalize(struct ec_verify_context *ctx)
 	nn_uninit(&v);
 
 	/* 8. If W' is the point at infinity, reject the signature. */
+	ext_printf("check zero");
 	if (prj_pt_iszero(&W_prime)) {
 		ret = -1;
 		goto err;
 	}
+	ext_printf("check zero");
 
 	/* 9. Compute r' = W'_x mod q */
 	// prj_pt_to_aff(&W_prime_aff, &W_prime);
@@ -614,7 +616,12 @@ int _ecdsa_verify_finalize(struct ec_verify_context *ctx)
 	// aff_pt_uninit(&W_prime_aff);
 
 	/* 10. Accept the signature if and only if r equals r' */
+	ext_printf("cmp");
+
+	dbg_nn_print("r_prime", &r_prime);
+	dbg_nn_print("r", r);
 	ret = (nn_cmp(&r_prime, r) != 0) ? -1 : 0;
+	ext_printf("cmp ret %d", ret);
 	nn_uninit(&r_prime);
 
  err:
