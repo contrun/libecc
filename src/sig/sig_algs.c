@@ -14,6 +14,7 @@
  *  See LICENSE file at the root folder of the project.
  */
 #include "sig_algs.h"
+#include "../external_deps/print.h"
 
 /*
  * Generic function to init a uninitialized public key from an initialized
@@ -364,6 +365,7 @@ int ec_verify_finalize(struct ec_verify_context *ctx)
 	HASH_MAPPING_SANITY_CHECK(ctx->h);
 
 	ret = ctx->sig->verify_finalize(ctx);
+	ext_printf("finalize ret %d\n", ret);
 
 	/* Clear the whole context to prevent future reuse */
 	local_memset(ctx, 0, sizeof(struct ec_verify_context));
@@ -378,16 +380,19 @@ int ec_verify(const u8 *sig, u8 siglen, const ec_pub_key *pub_key,
 	int ret;
 	struct ec_verify_context ctx;
 
+	ext_printf("running ec_verify_init\n");
 	ret = ec_verify_init(&ctx, pub_key, sig, siglen, sig_type, hash_type);
 	if (ret) {
 		goto err;
 	}
 
+	ext_printf("running ec_verify_update\n");
 	ret = ec_verify_update(&ctx, m, mlen);
 	if (ret) {
 		goto err;
 	}
 
+	ext_printf("running ec_verify_finalize\n");
 	ret = ec_verify_finalize(&ctx);
 
  err:

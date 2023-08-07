@@ -268,6 +268,7 @@ int perform_known_test_vectors_test(const char *sig, const char *hash, const cha
 			}
 		}	
 
+		ext_printf("Testing");
 		ret = ec_sig_known_vector_tests_one(cur_test);
 		ext_printf("[%s] %30s selftests: known test vectors "
 			   "sig/verif %s\n", ret ? "-" : "+",

@@ -575,15 +575,26 @@ int _ecdsa_verify_finalize(struct ec_verify_context *ctx)
 	nn_uninit(&tmp);
 
 	/* 7. Compute W' = uG + vY */
+  ext_printf("Begin of multi exponentiation ------------------------------------\n");
+	dbg_nn_print("u", &u);
+	dbg_ec_point_print("G", G);
+	dbg_nn_print("v", &v);
+	dbg_ec_point_print("Y", Y);
 	prj_pt_mul_monty(&uG, &u, G);
 	prj_pt_mul_monty(&vY, &v, Y);
 	prj_pt_add_monty(&W_prime, &uG, &vY);
+	dbg_ec_point_print("W_prime1 = uG + vY", &W_prime);
+	dbg_nn_print("W_x", &(W_prime.X.fp_val));
+	dbg_nn_print("W_y", &(W_prime.Y.fp_val));
+	dbg_nn_print("W_z", &(W_prime.Z.fp_val));
+  ext_printf("End of multi exponentiation -------------------------------------\n");
 	prj_pt_uninit(&uG);
 	prj_pt_uninit(&vY);
 	nn_uninit(&u);
 	nn_uninit(&v);
 
 	/* 8. If W' is the point at infinity, reject the signature. */
+	ext_printf("checking W_prime zero\n");
 	if (prj_pt_iszero(&W_prime)) {
 		ret = -1;
 		goto err;
@@ -598,7 +609,11 @@ int _ecdsa_verify_finalize(struct ec_verify_context *ctx)
 	aff_pt_uninit(&W_prime_aff);
 
 	/* 10. Accept the signature if and only if r equals r' */
+	ext_printf("comparing r_prime with r\n");
+	dbg_nn_print("r_prime", &r_prime);
+	dbg_nn_print("r", r);
 	ret = (nn_cmp(&r_prime, r) != 0) ? -1 : 0;
+	ext_printf("nn_cmp ret %d\n", ret);
 	nn_uninit(&r_prime);
 
  err:
