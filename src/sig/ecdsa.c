@@ -496,6 +496,7 @@ int _ecdsa_verify_finalize(struct ec_verify_context *ctx)
 {
 	// prj_pt uG, vY, W_prime;
 	prj_pt W_prime;
+	aff_pt W_prime_aff;
 	nn e, tmp, sinv, u, v, r_prime;
 	// aff_pt W_prime_aff;
 	prj_pt_src_t G, Y;
@@ -585,7 +586,17 @@ int _ecdsa_verify_finalize(struct ec_verify_context *ctx)
 
 	// prj_pt_copy(&W_prime, Y);
 	// prj_pt_copy(&W_prime, G);
+  ext_printf("Begin of multi exponentiation ------------------------------------\n");
+	dbg_nn_print("u", &u);
+	dbg_ec_point_print("G", G);
+	dbg_nn_print("v", &v);
+	dbg_ec_point_print("Y", Y);
 	prj_pt_ec_mult_wnaf(&W_prime, &u, G, &v, Y);
+	dbg_ec_point_print("W_prime1 = uG + vY", &W_prime);
+	dbg_nn_print("W_x", &(W_prime.X.fp_val));
+	dbg_nn_print("W_y", &(W_prime.Y.fp_val));
+	dbg_nn_print("W_z", &(W_prime.Z.fp_val));
+  ext_printf("End of multi exponentiation -------------------------------------\n");
 	// prj_pt_copy(&uG, G);
 	// prj_pt_copy(&vY, Y);
 	// prj_pt_copy(&W_prime, Y);
@@ -607,11 +618,10 @@ int _ecdsa_verify_finalize(struct ec_verify_context *ctx)
 	ext_printf("check zero");
 
 	/* 9. Compute r' = W'_x mod q */
-	// prj_pt_to_aff(&W_prime_aff, &W_prime);
-	// dbg_nn_print("W'_x", &(W_prime_aff.x.fp_val));
-	// dbg_nn_print("W'_y", &(W_prime_aff.y.fp_val));
-	// nn_mod(&r_prime, &(W_prime_aff.x.fp_val), q);
-	nn_mod(&r_prime, &(W_prime.X.fp_val), q);
+	prj_pt_to_aff(&W_prime_aff, &W_prime);
+	dbg_nn_print("W'_x", &(W_prime_aff.x.fp_val));
+	dbg_nn_print("W'_y", &(W_prime_aff.y.fp_val));
+	nn_mod(&r_prime, &(W_prime_aff.x.fp_val), q);
 	prj_pt_uninit(&W_prime);
 	// aff_pt_uninit(&W_prime_aff);
 
