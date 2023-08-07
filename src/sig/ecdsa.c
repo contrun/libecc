@@ -578,6 +578,10 @@ int _ecdsa_verify_finalize(struct ec_verify_context *ctx)
 	prj_pt_mul_monty(&uG, &u, G);
 	prj_pt_mul_monty(&vY, &v, Y);
 	prj_pt_add_monty(&W_prime, &uG, &vY);
+	dbg_ec_point_print("W_prime1 = uG + vY", &W_prime);
+	dbg_nn_print("W_x", &(W_prime.X.fp_val));
+	dbg_nn_print("W_y", &(W_prime.Y.fp_val));
+	dbg_nn_print("W_z", &(W_prime.Z.fp_val));
 	prj_pt_uninit(&uG);
 	prj_pt_uninit(&vY);
 	nn_uninit(&u);
