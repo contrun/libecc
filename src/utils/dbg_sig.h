@@ -24,7 +24,9 @@
 #define EC_SIG_ALG "UNKNOWN_SIG_ALG"
 #endif
 
+#include "print_buf.h"
 #define dbg_buf_print(msg, ...) do {\
+	buffer_print(msg, __VA_ARGS__);\
 } while(0);
 #define dbg_nn_print(msg, ...) do {\
 	nn_print(EC_SIG_ALG " " msg, __VA_ARGS__);\

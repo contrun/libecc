@@ -31,22 +31,14 @@ int main(int argc, const char *argv[]) {
 
 const size_t nn_buf_size = 256 / 8;
 
-void buf_print(const char *msg, const unsigned char *buf, size_t buflen) {
-  ext_printf("%s: ", msg);
-  for (size_t i = 0; i < buflen; i++) {
-    ext_printf("%02x", buf[i]);
-  }
-  ext_printf("\n");
-}
-
 __attribute__((always_inline)) inline void dump_nn(char *m, nn_src_t a) {
 #ifdef VERBOSE_INNER_VALUES
   u8 tmp_buf[nn_buf_size];
   dbg_nn_print("a", a);
   nn_export_to_buf((u8 *)&tmp_buf, nn_buf_size, a);
-  dbg_buf_print("a", &tmp_buf);
+  dbg_buf_print("a", &tmp_buf, sizeof(tmp_buf));
 #endif
-  buf_print(m, (const unsigned char *)a->val, nn_buf_size);
+  dbg_buf_print(m, (const unsigned char *)a->val, nn_buf_size);
 }
 
 int main() {
