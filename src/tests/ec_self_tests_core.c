@@ -158,6 +158,7 @@ static int ec_import_export_test(const ec_test_case *c)
 static int ec_test_sign(u8 *sig, u8 siglen, ec_key_pair *kp,
 			const ec_test_case *c)
 {
+	dbg_buf_print("message", (const u8 *)(c->msg), c->msglen);
 	return _ec_sign(sig, siglen, kp, (const u8 *)(c->msg), c->msglen,
 			c->nn_random, c->sig_type, c->hash_type);
 }
@@ -196,6 +197,8 @@ static int ec_sig_known_vector_tests_one(const ec_test_case *c)
 		goto err;
 	}
 	siglen = c->exp_siglen;
+	dbg_priv_key_print("priv", &kp.priv_key);
+	dbg_pub_key_print("pub", &kp.pub_key);
 	ret = ec_test_sign(sig, siglen, &kp, c);
 	if (ret) {
 		failed_test = TEST_SIG_ERROR;
@@ -208,6 +211,7 @@ static int ec_sig_known_vector_tests_one(const ec_test_case *c)
 		goto err;
 	}
 
+  dbg_buf_print("signature", sig, siglen);
 	ret = ec_test_verify(sig, siglen, &(kp.pub_key), c);
 	if (ret) {
 		failed_test = TEST_VERIF_ERROR;

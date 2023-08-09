@@ -62,6 +62,7 @@ src/nn/ll_u256_mont-riscv64.o: src/nn/ll_u256_mont-riscv64.S
 # sets of utils objects.
 
 UTILS_ARITH_SRC = src/utils/utils.c
+UTILS_ARITH_SRC += $(wildcard src/utils/print_buf.c)
 UTILS_ARITH_SRC += $(wildcard src/utils/*_nn.c)
 UTILS_ARITH_SRC += $(wildcard src/utils/*_fp.c)
 UTILS_ARITH_OBJECTS = $(patsubst %.c, %.o, $(UTILS_ARITH_SRC))

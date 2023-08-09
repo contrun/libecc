@@ -44,7 +44,7 @@ __attribute__((always_inline)) inline void dump_nn(char *m, nn_src_t a) {
   u8 tmp_buf[nn_buf_size];
   dbg_nn_print("a", a);
   nn_export_to_buf((u8 *)&tmp_buf, nn_buf_size, a);
-  dbg_buf_print("a", &tmp_buf);
+  dbg_buf_print("a", &tmp_buf, sizeof(tmp_buf));
 #endif
   buf_print(m, (const unsigned char *)a->val, nn_buf_size);
 }
