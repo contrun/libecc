@@ -1044,6 +1044,19 @@ int ecmult_wnaf(int * wnag, nn_src_t m, int window){
 
 void prj_pt_ec_mult_wnaf(prj_pt_t out, nn_src_t m, prj_pt_src_t in11, nn_src_t n, prj_pt_src_t in3)
 {
+	prj_pt out2, p1, p2;
+	prj_pt_mul_monty(&p1, m, in11);
+	prj_pt_mul_monty(&p2, n, in3);
+	prj_pt_add_monty(&out2, &p1, &p2);
+	#ifdef VERBOSE_INNER_VALUES
+	#undef EC_SIG_ALG
+	#define EC_SIG_ALG "WNAF"
+	#endif
+	dbg_nn_print("m", m);
+	dbg_ec_point_print("in1", in11);
+	dbg_nn_print("n", n);
+	dbg_ec_point_print("in2", in3);
+	dbg_ec_point_print("out = m*in1 + n*in2", &out2);
 
 	prj_pt in22, in111;
 	prj_pt_t in2, in1;
@@ -1191,6 +1204,8 @@ void prj_pt_ec_mult_wnaf(prj_pt_t out, nn_src_t m, prj_pt_src_t in11, nn_src_t n
 	fp_mul(&out->Y, &out->Y, &zinv3);
 	fp_one(&out->Z);
 
+	dbg_ec_point_print("wNAF out = m*in1 + n*in2", out);
+	MUST_HAVE(prj_pt_cmp(out, &out2) == 0);
 	fp_uninit(&zinv2);
 	fp_uninit(&zinv3);
 
