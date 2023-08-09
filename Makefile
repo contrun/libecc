@@ -24,6 +24,7 @@ EXEC_TO_CLEAN = $(BUILD_DIR)/ec_self_tests $(BUILD_DIR)/nn_mul_redc1 $(BUILD_DIR
 
 # all and clean, as you might expect
 all: depend $(LIBS)
+execs: depend $(LIBS) $(TESTS_EXEC)
 
 clean:
 	@rm -f $(LIBS) $(EXEC_TO_CLEAN)
@@ -239,3 +240,5 @@ DEPENDS = $(EXT_DEPS_DEPS) $(UTILS_ARITH_DEPS) $(UTILS_EC_DEPS) $(UTILS_SIGN_DEP
 depend: $(DEPENDS)
 
 .PHONY: all depend clean 16 32 64 debug debug16 debug32 debug64 force_arch32 force_arch64
+
+
