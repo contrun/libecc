@@ -33,28 +33,42 @@ jobs:
       with:
         diagnostic-endpoint: ""
 
-    - name: run tests
-      continue-on-error: true
+    - name: Install dependencies
       run: |
-        set -xeuo pipefail
         nix profile install "nixpkgs#pkgsCross.riscv64.stdenv.cc.out" "nixpkgs#pkgsCross.riscv64.pkgsStatic.stdenv.cc.out" "nixpkgs#qemu" "nixpkgs#hexyl"
+
+    - name: Build
+      run: |
         VERBOSE=1 CC=riscv64-unknown-linux-musl-gcc CFLAGS="-DVERBOSE_INNER_VALUES -DUSER_NN_BIT_LEN=256 -DWORDSIZE=64 -DWITH_STDLIB -DWITH_BLANK_EXTERNAL_DEPENDENCIES -fPIC -g -O3" make execs
-        mkdir tmp
-        cd tmp
-        qemu-riscv64 ../build/ec_utils gen_keys SECP256R1 ECDSA test
+
+    - name: Create a signature and verify it
+      run: |
+        mkdir "${{ github.workspace }}/tests/tmp"
+        cd "${{ github.workspace }}/tests/tmp"
+        qemu-riscv64 "${{ github.workspace }}/build/ec_utils" gen_keys SECP256R1 ECDSA test
         ls -lha
         for f in test*.bin; do echo "$f"; hexyl "$f"; done
         cat test*.h
         head -c 8 /dev/random > message
         hexyl message
-        qemu-riscv64 ../build/ec_utils sign SECP256R1 ECDSA SHA256 message test_private_key.bin signature
+        qemu-riscv64 "${{ github.workspace }}/build/ec_utils" sign SECP256R1 ECDSA SHA256 message test_private_key.bin signature
         hexyl signature
-        qemu-riscv64 ../build/ec_utils verify SECP256R1 ECDSA SHA256 message test_public_key.bin signature
-        qemu-riscv64 ../build/ec_self_tests vectors
+        qemu-riscv64 "${{ github.workspace }}/build/ec_utils" verify SECP256R1 ECDSA SHA256 message test_public_key.bin signature
+
+    - name: Verify a fixed signature
+      run: |
+        set -xeuo pipefail
+        cd "${{ github.workspace }}/tests/fixtures"
+        qemu-riscv64 "${{ github.workspace }}/build/ec_utils" verify SECP256R1 ECDSA SHA256 message pubkey.bin signature
+
+    - name: Run tests
+      continue-on-error: true
+      run: |
+        qemu-riscv64 "${{ github.workspace }}/build/ec_self_tests" vectors
 
     - uses: actions/upload-artifact@v3
       with:
         name: riscv64-linux-artifacts
         path: |
           build
-          tmp
+          tests/tmp
