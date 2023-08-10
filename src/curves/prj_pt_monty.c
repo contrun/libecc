@@ -1045,6 +1045,8 @@ int ecmult_wnaf(int * wnag, nn_src_t m, int window){
 void prj_pt_ec_mult_wnaf(prj_pt_t out, nn_src_t m, prj_pt_src_t in11, nn_src_t n, prj_pt_src_t in3)
 {
 	prj_pt out2, p1, p2;
+	prj_pt_init(&p1, in3->crv);
+	prj_pt_init(&p2, in3->crv);
 	prj_pt_mul_monty(&p1, m, in11);
 	prj_pt_mul_monty(&p2, n, in3);
 	prj_pt_add_monty(&out2, &p1, &p2);

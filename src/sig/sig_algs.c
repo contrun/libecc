@@ -33,6 +33,7 @@ int init_pubkey_from_privkey(ec_pub_key *pub_key, ec_priv_key *priv_key)
 	     sm->type != UNKNOWN_SIG_ALG; sm = &ec_sig_maps[++i]) {
 		if (sm->type == priv_key->key_type) {
 			sm->init_pub_key(pub_key, priv_key);
+			prj_pt_normalize(&pub_key->y);
 			ret = 0;
 			break;
 		}

@@ -193,28 +193,36 @@ static int ec_sig_known_vector_tests_one(const ec_test_case *c)
 
 	import_params(&params, c->ec_str_p);
 
-	// ret = ec_key_pair_import_from_priv_key_buf(&kp, &params, c->priv_key,
-	// 					   c->priv_key_len,
-	// 					   c->sig_type);
-	// if (ret) {
-	// 	failed_test = TEST_KEY_IMPORT_ERROR;
-	// 	goto err;
-	// }
-	// siglen = c->exp_siglen;
-	// dbg_priv_key_print("priv", &kp.priv_key);
-	// dbg_pub_key_print("pub", &kp.pub_key);
-// 	ret = ec_test_sign(sig, siglen, &kp, c);
-// 	if (ret) {
-// 		failed_test = TEST_SIG_ERROR;
-// 		goto err;
-// 	}
-// 
-// 	ret = are_equal(sig, c->exp_sig, siglen);
-// 	if (!ret) {
-// 		failed_test = TEST_SIG_COMP_ERROR;
-// 		goto err;
-// 	}
-	// ret = ec_test_verify((u8 *)c->exp_sig, siglen, &(k.pub_key), c);
+	ret = ec_key_pair_import_from_priv_key_buf(&kp, &params, c->priv_key,
+						   c->priv_key_len,
+						   c->sig_type);
+	if (ret) {
+		failed_test = TEST_KEY_IMPORT_ERROR;
+		goto err;
+	}
+	dbg_priv_key_print("priv", &kp.priv_key);
+	dbg_pub_key_print("pub", &kp.pub_key);
+	dbg_buf_print("kp", &kp, sizeof(kp));
+	dbg_buf_print("priv", &kp.priv_key, sizeof(kp.priv_key));
+	dbg_buf_print("pub", &kp.pub_key, sizeof(kp.pub_key));
+	siglen = c->exp_siglen;
+	ret = ec_test_sign(sig, siglen, &kp, c);
+	if (ret) {
+		failed_test = TEST_SIG_ERROR;
+		goto err;
+	}
+
+	ret = are_equal(sig, c->exp_sig, siglen);
+	if (!ret) {
+		failed_test = TEST_SIG_COMP_ERROR;
+		goto err;
+	}
+	ret = ec_test_verify((u8 *)c->exp_sig, siglen, &(kp.pub_key), c);
+	if (ret) {
+		failed_test = TEST_VERIF_ERROR;
+		goto err;
+	}
+
 
 	const u8 pub_key_buf[] = {
     0x00, 0x01, 0x04, 0x24, 0x42, 0xa5, 0xcc, 0x0e, 0xcd, 0x01, 0x5f, 0xa3, 0xca, 0x31, 0xdc, 0x8e, 0x2b, 0xbc, 0x70, 0xbf, 0x42, 0xd6, 0x0c, 0xbc, 0xa2, 0x00, 0x85, 0xe0, 0x82, 0x2c, 0xb0, 0x42, 0x35, 0xe9, 0x70, 0x6f, 0xc9, 0x8b, 0xd7, 0xe5, 0x02, 0x11, 0xa4, 0xa2, 0x71, 0x02, 0xfa, 0x35, 0x49, 0xdf, 0x79, 0xeb, 0xcb, 0x4b, 0xf2, 0x46, 0xb8, 0x09, 0x45, 0xcd, 0xdf, 0xe7, 0xd5, 0x09, 0xbb, 0xfd, 0x7d, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
@@ -227,6 +235,9 @@ static int ec_sig_known_vector_tests_one(const ec_test_case *c)
 		ext_printf("Error: error when importing public key from\n");
 		goto err;
 	}
+
+	dbg_pub_key_print("pub", &pub_key);
+	dbg_buf_print("pub", &pub_key, sizeof(pub_key));
 
 	ret = ec_test_verify((u8 *)c->exp_sig, c->exp_siglen, &pub_key, c);
 	if (ret) {

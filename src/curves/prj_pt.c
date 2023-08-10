@@ -148,6 +148,23 @@ void prj_pt_copy(prj_pt_t out, prj_pt_src_t in)
 	fp_copy(&(out->Z), &(in->Z));
 }
 
+void prj_pt_normalize(prj_pt_t out)
+{
+	fp inv;
+
+	prj_pt_check_initialized(out);
+	MUST_HAVE(!prj_pt_iszero(out));
+
+	fp_init(&inv, (out->X).ctx);
+
+	fp_inv(&inv, &(out->Z));
+	fp_mul(&(out->X), &(out->X), &inv);
+	fp_mul(&(out->Y), &(out->Y), &inv);
+	fp_one(&(out->Z));
+
+	fp_uninit(&inv);
+}
+
 void prj_pt_to_aff(aff_pt_t out, prj_pt_src_t in)
 {
 	fp inv;

@@ -62,7 +62,6 @@ jobs:
         qemu-riscv64 "${{ github.workspace }}/build/ec_utils" verify SECP256R1 ECDSA SHA256 message pubkey.bin signature
 
     - name: Run tests
-      continue-on-error: true
       run: |
         qemu-riscv64 "${{ github.workspace }}/build/ec_self_tests" vectors
 
