@@ -72,7 +72,7 @@
 #ifdef WITH_CKB
 #include <stdio.h>
 int ckb_exit(signed char code);
-#define MUST_HAVE(x) do { if (!(x)) { printf("MUST_HAVE(%s) failed.", #x); ckb_exit(-2); } } while (0)
+#define MUST_HAVE(x) do { if (!(x)) { printf("%s: MUST_HAVE(%s) failed.", __func__, #x); ckb_exit(-2); } } while (0)
 #else
 #ifdef WITH_STDLIB
 #include <stdio.h>
