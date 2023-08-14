@@ -1,4 +1,4 @@
-name: ci
+name: qemu
 
 on:
   push:
@@ -39,7 +39,7 @@ jobs:
 
     - name: Build
       run: |
-        VERBOSE=1 CC=riscv64-unknown-linux-musl-gcc CFLAGS="-DVERBOSE_INNER_VALUES -DUSER_NN_BIT_LEN=256 -DWORDSIZE=64 -DWITH_STDLIB -DWITH_BLANK_EXTERNAL_DEPENDENCIES -fPIC -g -O3" make execs
+        VERBOSE=1 CC=riscv64-unknown-linux-musl-gcc CFLAGS="-DVERBOSE_INNER_VALUES -DUSER_NN_BIT_LEN=256 -DWORDSIZE=64 -DWITH_STDLIB -fPIC -g -O3" make execs
 
     - name: Create a signature and verify it
       run: |

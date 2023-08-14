@@ -15,7 +15,20 @@
  */
 #include "print.h"
 
-#ifdef WITH_STDLIB
+#if defined(WITH_CKB)
+#include <stdio.h>
+#include <stdarg.h>
+#include "ckb_syscalls.h"
+void ext_printf(const char *format, ...)
+{
+	va_list arglist;
+
+	va_start(arglist, format);
+	printf(format, arglist);
+	va_end(arglist);
+}
+
+#elif defined(WITH_STDLIB)
 #include <stdio.h>
 #include <stdarg.h>
 void ext_printf(const char *format, ...)
@@ -25,11 +38,6 @@ void ext_printf(const char *format, ...)
 	va_start(arglist, format);
 	vprintf(format, arglist);
 	va_end(arglist);
-}
-
-#elif defined(WITH_CKB)
-void ext_printf(const char *format, ...) {
-	FORCE_USED_VAR(format);
 }
 
 #else

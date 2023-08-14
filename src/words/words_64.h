@@ -35,6 +35,10 @@ __extension__ typedef unsigned __int128 dword_t;
 #define HWORD_BITS (32)
 #define HWORD_BYTES (HWORD_BITS / 8)
 
+#if defined(WITH_CKB) && ! defined(UINT64_C)
+#define UINT64_C(c) (c ## ULL)
+#endif
+
 /* WORD: constant of word-size. */
 #define WORD(A) (UINT64_C(A))
 #define HWORD(A) (UINT32_C(A))

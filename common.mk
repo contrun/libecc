@@ -4,12 +4,17 @@
 MINGW := $(shell $(CC) -dumpmachine 2>&1 | grep -v mingw)
 # Detect Mac OS compilers: these usually don't like ELF pie related flags ...
 APPLE := $(shell $(CC) -dumpmachine 2>&1 | grep -v apple)
+RISCV := $(shell $(CC) -dumpmachine 2>&1 | grep -E "riscv.*(none|unknown)")
 ifneq ($(MINGW),)
 FPIC_CFLAG=-fPIC
+endif
 ifneq ($(APPLE),)
 FPIE_CFLAG=-fPIE
 FPIE_LDFLAGS=-pie -Wl,-z,relro,-z,now
 endif
+ifneq ($(RISCV),)
+FPIE_CFLAG=
+FPIE_LDFLAGS=-Wl,-z,relro,-z,now
 endif
 
 # NOTE: with mingw, FORTIFY_SOURCE=2 must be used
@@ -188,3 +193,7 @@ endif
 ifeq ($(LADDER), 0)
 CFLAGS += -DUSE_DOUBLE_ADD_ALWAYS
 endif
+
+
+
+

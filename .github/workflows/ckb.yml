@@ -1,0 +1,52 @@
+name: ckb
+
+on:
+  push:
+    branches:
+    - '**'
+  workflow_dispatch:
+    branches:
+    - '**'
+  pull_request:
+    branches:
+    - master
+    - main
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ ubuntu-latest ]
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+
+    - uses: cachix/install-nix-action@v22
+      with:
+        nix_path: nixpkgs=channel:nixos-unstable
+
+    - uses: DeterminateSystems/magic-nix-cache-action@v1
+      with:
+        diagnostic-endpoint: ""
+
+    - name: Install dependencies
+      run: |
+        wget 'https://github.com/nervosnetwork/ckb-standalone-debugger/releases/download/v0.107.0/ckb-debugger-linux-x64.tar.gz'
+        tar zxvf ckb-debugger-linux-x64.tar.gz
+        chmod +x ckb-debugger
+        cp ckb-debugger ~/.cargo/bin
+        ckb-debugger --version
+        nix profile install "nixpkgs#pkgsCross.riscv64-embedded.stdenv.cc.out" "nixpkgs#hexyl"
+
+    - name: Build
+      run: |
+        git clone https://github.com/nervosnetwork/ckb-c-stdlib.git deps/ckb-c-stdlib
+        VERBOSE=1 CC=riscv64-none-elf-gcc CFLAGS="-fno-builtin -fno-builtin-printf -nostdinc -nostdlib -nostartfiles -fvisibility=hidden -fdata-sections -ffunction-sections -Ideps/ckb-c-stdlib -Ideps/ckb-c-stdlib/libc -Ideps/ckb-c-stdlib/molecule -DVERBOSE_INNER_VALUES -DUSER_NN_BIT_LEN=256 -DWORDSIZE=64 -DWITH_STDLIB -DWITH_CKB -DCKB_DECLARATION_ONLY -fPIC -g -O3" BIN_CFLAGS="-fno-builtin -fno-builtin-printf -nostdinc -nostdlib -nostartfiles -Ideps/ckb-c-stdlib -Ideps/ckb-c-stdlib/libc -Ideps/ckb-c-stdlib/molecule -DVERBOSE_INNER_VALUES -DUSER_NN_BIT_LEN=256 -DWORDSIZE=64 -DWITH_STDLIB -DWITH_CKB -fPIC -g -O3" FPIE_CFLAGS="" FPIE_LDFLAGS="-Wl,-z,relro,-z,now" make ckb_execs
+
+    - name: Run tests
+      run: |
+        ckb-debugger --bin "${{ github.workspace }}/build/ec_self_tests" vectors

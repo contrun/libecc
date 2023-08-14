@@ -15,6 +15,8 @@ endif
 
 # Executables to build
 TESTS_EXEC = $(BUILD_DIR)/ec_self_tests $(BUILD_DIR)/ec_utils $(BUILD_DIR)/nn_mul_redc1
+# ec_utils has some file operations, exlude it here.
+CKB_TESTS_EXEC = $(BUILD_DIR)/ec_self_tests $(BUILD_DIR)/nn_mul_redc1
 # We also compile executables with dynamic linking if asked to
 ifeq ($(WITH_DYNAMIC_LIBS),1)
 TESTS_EXEC += $(BUILD_DIR)/ec_self_tests_dyn $(BUILD_DIR)/ec_utils_dyn
@@ -25,6 +27,7 @@ EXEC_TO_CLEAN = $(BUILD_DIR)/ec_self_tests $(BUILD_DIR)/nn_mul_redc1 $(BUILD_DIR
 # all and clean, as you might expect
 all: depend $(LIBS)
 execs: depend $(LIBS) $(TESTS_EXEC)
+ckb_execs: depend $(LIBS) $(CKB_TESTS_EXEC)
 
 clean:
 	@rm -f $(LIBS) $(EXEC_TO_CLEAN)

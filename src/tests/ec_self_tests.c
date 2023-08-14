@@ -1,3 +1,7 @@
+#ifdef WITH_CKB
+#define CKB_C_STDLIB_PRINTF
+#endif
+
 /*
  *  Copyright (C) 2017 - This file is part of libecc project
  *
