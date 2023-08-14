@@ -49,4 +49,4 @@ jobs:
 
     - name: Run tests
       run: |
-        ckb-debugger --bin "${{ github.workspace }}/build/ec_self_tests" vectors
+        ckb-debugger --max-cycles 999999999999 --bin "${{ github.workspace }}/build/ec_self_tests" vectors |& fgrep 'Run result: 0'
