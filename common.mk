@@ -107,6 +107,11 @@ ifneq ($(LIBECC_NOSTDLIB),1)
 CFLAGS += -DWITH_STDLIB
 endif
 
+# By default, we don't ckb specific functions
+ifeq ($(LIBECC_CKB),1)
+CFLAGS += -DWITH_CKB
+endif
+
 # Let's now define the two kinds of CFLAGS we will use for building our
 # library (LIB_CFLAGS) and binaries (BIN_CFLAGS) objects.
 # If the user has not overriden the CFLAGS, we add the usual gcc/clang

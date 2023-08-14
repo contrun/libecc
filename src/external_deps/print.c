@@ -26,6 +26,12 @@ void ext_printf(const char *format, ...)
 	vprintf(format, arglist);
 	va_end(arglist);
 }
+
+#elif defined(WITH_CKB)
+void ext_printf(const char *format, ...) {
+	FORCE_USED_VAR(format);
+}
+
 #else
 #error "print.c: you have to implement ext_printf"
 #endif

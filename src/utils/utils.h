@@ -69,10 +69,19 @@
 #define SHOULD_HAVE(x) assert(x)
 #define KNOWN_FACT(x) assert(x)
 #else
-
+#ifdef WITH_CKB
 #include <stdio.h>
 int ckb_exit(signed char code);
 #define MUST_HAVE(x) do { if (!(x)) { printf("MUST_HAVE(%s) failed.", #x); ckb_exit(-2); } } while (0)
+#else
+#ifdef WITH_STDLIB
+#include <stdio.h>
+#include <stdlib.h>
+#define MUST_HAVE(x) do { if (!(x)) { printf("MUST_HAVE(%s) failed.", #x); exit(-2); } } while (0)
+#else
+#define MUST_HAVE(x)
+#endif
+#endif
 #define SHOULD_HAVE(x)
 #define KNOWN_FACT(x)
 #endif
