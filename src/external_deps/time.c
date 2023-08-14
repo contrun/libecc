@@ -16,8 +16,16 @@
 
 #include "time.h"
 
+#if defined(WITH_CKB)
+int get_ms_time(u64 *time) {
+  static u64 current_time = 0;
+  *time = current_time;
+  current_time++;
+  return 0;
+}
+
 /* Unix and compatible case (including macOS) */
-#if defined(WITH_STDLIB) && (defined(__unix__) || defined(__APPLE__))
+#elif defined(WITH_STDLIB) && (defined(__unix__) || defined(__APPLE__))
 #include <stddef.h>
 #include <sys/time.h>
 
@@ -49,14 +57,6 @@ int get_ms_time(u64 *time)
 	*time = (((st.wMinute * 60) + st.wSecond) * 1000) + st.wMilliseconds;
 
 	return 0;
-}
-
-#elif defined(WITH_CKB)
-int get_ms_time(u64 *time) {
-  static u64 current_time = 0;
-  *time = current_time;
-  current_time++;
-  return 0;
 }
 
 /* No platform detected, the used must provide an implementation! */

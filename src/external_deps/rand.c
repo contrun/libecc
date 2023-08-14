@@ -15,8 +15,13 @@
  */
 #include "rand.h"
 
+#if defined(WITH_CKB)
+int get_random(unsigned char *buf, u16 len) {
+  return -1;
+}
+
 /* Unix and compatible case (including macOS) */
-#if defined(WITH_STDLIB) && (defined(__unix__) || defined(__APPLE__))
+#elif defined(WITH_STDLIB) && (defined(__unix__) || defined(__APPLE__))
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -91,11 +96,6 @@ int get_random(unsigned char *buf, u16 len)
 	}
 	CryptReleaseContext(hCryptProv, 0);
 	return 0;
-}
-
-#elif defined(WITH_CKB)
-int get_random(unsigned char *buf, u16 len) {
-  return -1;
 }
 
 /* No platform detected, the user must provide an implementation! */
