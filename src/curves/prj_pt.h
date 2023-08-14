@@ -55,6 +55,10 @@ int prj_pt_is_on_curve(prj_pt_src_t in);
 
 void prj_pt_copy(prj_pt_t out, prj_pt_src_t in);
 
+// Set the z coordinate of the projective point to 1.
+// This is useful in situations like getting the affine coordinates of the point.
+void prj_pt_normalize(prj_pt_t out);
+
 void prj_pt_to_aff(aff_pt_t out, prj_pt_src_t in);
 
 void ec_shortw_aff_to_prj(prj_pt_t out, aff_pt_src_t in);

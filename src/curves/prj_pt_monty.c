@@ -1055,6 +1055,10 @@ void prj_pt_ec_mult_wnaf(prj_pt_t out, nn_src_t m, prj_pt_src_t in11, nn_src_t n
 
 	prj_pt_copy(in1, in11);
 	prj_pt_copy(in2, in3);
+	// TOOD: For some reasons yet to be investigated, below algorithm
+	// works only for projective points whose z coordinate is 1.
+	prj_pt_normalize(in1);
+	prj_pt_normalize(in2);
 
 	// fp inv;
 	// fp_init(&inv, in3->crv->a.ctx);
