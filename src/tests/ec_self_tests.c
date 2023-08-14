@@ -158,7 +158,11 @@ int main(int argc, char *argv[])
 	int i, j, k;
 
 	/* By default, perform all tests */
+#if defined(WITH_CKB)
+	tests_to_do = KNOWN_TEST_VECTORS | RANDOM_SIG_VERIF;
+#else
 	tests_to_do = KNOWN_TEST_VECTORS | RANDOM_SIG_VERIF | PERFORMANCE;
+#endif
 
 	/* Sanity check */
 	if(MAX_FILTERS < 1){
