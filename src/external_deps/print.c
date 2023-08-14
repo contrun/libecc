@@ -21,11 +21,6 @@
 #include "ckb_syscalls.h"
 void ext_printf(const char *format, ...)
 {
-	va_list arglist;
-
-	va_start(arglist, format);
-	printf(format, arglist);
-	va_end(arglist);
 }
 
 #elif defined(WITH_STDLIB)
