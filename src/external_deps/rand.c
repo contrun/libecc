@@ -17,7 +17,13 @@
 
 #if defined(WITH_CKB)
 int get_random(unsigned char *buf, u16 len) {
-  return -1;
+  // Note that even while doing purely deterministic operations like
+  // signature verification, libecc still expects random source which
+  // returns no error. An example is that the initializing public key
+  // from private key function call `nn_get_random_mod` to get a blind
+  // factor. See
+  // https://github.com/cryptape/libecc/blob/6a56c83fb0e264268b0486ea58ea1753a16aa699/src/sig/ecdsa.c#L31-L62
+  return 0;
 }
 
 /* Unix and compatible case (including macOS) */
