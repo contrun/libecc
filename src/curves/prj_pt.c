@@ -150,10 +150,18 @@ void prj_pt_copy(prj_pt_t out, prj_pt_src_t in)
 
 void prj_pt_normalize(prj_pt_t out)
 {
+	fp one;
 	fp inv;
 
 	prj_pt_check_initialized(out);
 	MUST_HAVE(!prj_pt_iszero(out));
+
+	fp_init(&one, out->Z.ctx);
+	fp_one(&one);
+	if (fp_cmp(&(out->Z), &one) == 0) {
+		fp_uninit(&one);
+		return;
+	}
 
 	fp_init(&inv, (out->X).ctx);
 
