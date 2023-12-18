@@ -19,6 +19,7 @@
 #include "../lib_ecc_config.h"
 #include "../lib_ecc_types.h"
 #include "../words/words.h"
+#include "copy.h"
 #include "sha224.h"
 #include "sha256.h"
 #include "sha384.h"
@@ -245,6 +246,14 @@ static const hash_mapping hash_maps[] = {
 #define MAX_HASH_ALG_NAME_LEN 9
 #endif /* MAX_HASH_ALG_NAME_LEN */
 #endif /* WITH_HASH_SHA3_512 */
+	{.type = COPY,
+	 .name = "COPY256",
+	 .digest_size = COPY256_SIZE,
+	 .block_size = COPY256_SIZE,
+	 .hfunc_init = (_hfunc_init) copy256_init,
+	 .hfunc_update = (_hfunc_update) copy256_update,
+	 .hfunc_finalize = (_hfunc_finalize) copy256_final,
+	 .hfunc_scattered = copy256_scattered},
 	{.type = UNKNOWN_HASH_ALG,	/* Needs to be kept last */
 	 .name = "UNKNOWN",
 	 .digest_size = 0,

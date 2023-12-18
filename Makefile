@@ -138,7 +138,7 @@ endif
 
 # Hash module
 
-HASH_SRC = $(wildcard src/hash/sha*.c) src/hash/hash_algs.c
+HASH_SRC = $(wildcard src/hash/sha*.c) src/hash/copy.c src/hash/hash_algs.c
 HASH_OBJECTS = $(patsubst %.c, %.o, $(HASH_SRC))
 HASH_DEPS = $(patsubst %.c, %.d, $(HASH_SRC))
 
