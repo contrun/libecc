@@ -27,10 +27,10 @@ void copy256_update(copy256_context *ctx, const u8 *input, u32 ilen)
 	left_bytes = COPY256_SIZE - (ctx->copied_bytes & 0x3F);
 
 	if (bytes_to_copy >= left_bytes) {
-    bytes_to_copy = left_bytes;
+		bytes_to_copy = left_bytes;
 	}
 	local_memcpy(ctx->buffer + ctx->copied_bytes, input, bytes_to_copy);
-  ctx->copied_bytes += bytes_to_copy;
+	ctx->copied_bytes += bytes_to_copy;
 	return;
 }
 
